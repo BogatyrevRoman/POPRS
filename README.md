@@ -7,128 +7,85 @@
 
 # 1. Подключить акселерометр ADXL345 к Orange Pi:
 
-Пин ADXL – Пин Orange Pi
+Pin ADXL345 – Pin Octopus Pro (SPI)
 
-VCC(3v) – Out 3.3 V (1 pin)
+VCC (3.3V) – 3.3V
 
-GND – GND (6 pin)
+GND – GND
 
-SDA – MOSI (19 pin)
+CS – CS (PA15 pin)
 
-SDO – MISO (21 pin)
+SDO – MISO (PB4 pin)
 
-SCL – CLK (23 pin)
+SDA – MOSI (PB5 pin)
 
-CS – CS (24 pin)
+SCL – SCK (PB3 pin)
 
-# 2. Активируем SPI интерфейс:
+# 2. Редактируем printer.cfg:
 
-sudo apt update
+Аппаратный SPI на Octopus Pro
 
-sudo apt install python3-numpy python3-matplotlib libatlas-base-dev -y
+    [adxl345]
+    cs_pin: PB12
+    spi_bus: spi1
+    spi_speed: 2000000  
 
-cd ~/klipper/
+    [resonance_tester]
+    accel_chip: adxl345
+    probe_points:
+        150, 150, 20   # точка на столе (X, Y, Z) в мм
 
-sudo cp "./scripts/klipper-mcu-start.sh" /etc/init.d/klipper_mcu
+# 3. Обход обязательного возвращения в HOME:
 
-sudo update-rc.d klipper_mcu defaults
+Редактируем printer.cfg
 
-cd ~/klipper/
+    [force_move]
+    enable_force_move: True
 
-make menuconfig
+Задаем положение в консоли:
 
-Выбираем Micro-controller Architecture –> Linux Process
+    SET_KINEMATIC_POSITION X=150 Y=150 Z=20
 
-sudo service klipper stop
-
-make flash
-
-sudo service klipper start
-
-Включаем SPI-dev1:
-
-1)sudo armbian-config
-
-2)Пароль
-
-3)System
-
-4)Hardware
-
-5)spi-spidev1 пробелом устанавливаем звездочку
-
-Включаем SPI-dev1:
-
-sudo nano /boot/armbianEnv.txt
-
-overlays=spi-spidev1
-
-param_spidev_spi_bus=1
-
-param_spidev_spi_cs=0
-
-# 3. Изменения в конфигурации printer.cfg:
-
-Микроконтроллер для Orange Pi
-
-[mcu host]
-
-serial: /tmp/klipper_host_mcu
-
-Настройка ADXL345
-
-[adxl345]
-
-cs_pin: host:None
-
-spi_bus: spidev1.0
-
-axes_map: y,x,z
-
-Тестер резонансов
-[resonance_tester]
-
-accel_chip: adxl345
-
-probe_points:
-    200, 200, 10
 
 # 4. Проверка работы акселерометра:
 
-ACCELEROMETER_QUERY
+    ACCELEROMETER_QUERY
 
 Получаем:
 
-Recv: // adxl345 values (x, y, z): 170.719200, 241.438400, 28.196800
+    Recv: // adxl345 values (x, y, z): 2220.617826, 9104.533087, 2274.896044
 
 # 5. Калибровка:
 
 Запускаем калибровку по X:
 
-TEST_RESONANCES AXIS=X
+    TEST_RESONANCES AXIS=X
 
 Запускаем калибровку по Y:
 
-TEST_RESONANCES AXIS=Y
+    TEST_RESONANCES AXIS=Y
 
 Строим графики:
 
-~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o ~/klipper/shaper_calibrate_x.png
+~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o ~/klipper/shaper_calibrate_x.png (Для оси X)
+<img width="993" height="623" alt="Снимок экрана 2026-04-12 в 14 48 18" src="https://github.com/user-attachments/assets/2e30b3f9-5c5a-44e5-b9e1-8dd91639dff7" />
+~/klipper/scripts/calibrate_shaper.py /tmp/resonances_y_*.csv -o ~/klipper/shaper_calibrate_y.png (Для оси Y)
+<img width="993" height="623" alt="Снимок экрана 2026-04-12 в 14 49 22" src="https://github.com/user-attachments/assets/31889659-ba5e-46fc-bb0d-f388b6026a13" />
 
-~/klipper/scripts/calibrate_shaper.py /tmp/resonances_y_*.csv -o ~/klipper/shaper_calibrate_y.png
+
 
 # 6. Интегрируем предложенную конфигурацию [input_shaper] в printer.cfg:
 
-[input_shaper]
+    [input_shaper]
 
-shaper_freq_x: 79.2
+    shaper_freq_x: 31.6
 
-shaper_type_x: mzv
+    shaper_type_x: mzv
 
-shaper_freq_y: 34.6
+    shaper_freq_y: 24.4
 
-shaper_type_y: mzv
+    shaper_type_y: zv
 
-[printer]
+    [printer]
 
-max_accel: 3000
+    max_accel: 1700
