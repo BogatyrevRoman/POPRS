@@ -76,6 +76,22 @@ SCL – SCK (PB3 pin)
 
 # 6. Интегрируем предложенную конфигурацию [input_shaper] в printer.cfg:
 
+Запускаем калибровку:
+
+Для оси X:
+
+    SHAPER_CALIBRATE AXIS=X
+
+Для оси Y: 
+
+    SHAPER_CALIBRATE AXIS=Y
+
+Получем результат:
+
+<img width="1550" height="301" alt="Снимок экрана 2026-04-11 в 16 45 07" src="https://github.com/user-attachments/assets/1509200b-cfd2-4cdf-bf81-561247a3860f" />
+
+Полученные результаты используем в printer.cfg:
+
     [input_shaper]
 
     shaper_freq_x: 31.6
